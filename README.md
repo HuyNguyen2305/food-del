@@ -8,8 +8,8 @@
    ```bash
    cd backend
 2. Install the required dependencies:
-``bash
-npm install express mongoose cors nodemon
+   ```bash
+   npm install express mongoose cors nodemon
 
 
 ### 2. Install Dependencies for Frontend
