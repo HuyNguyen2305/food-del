@@ -41,7 +41,7 @@ Create a database called crud.
 Click on the + next to the crud database to create a new collection.
 Create a collection called users.
 
-###5. Running the Application
+### 5. Running the Application
 After setting up the database and installing dependencies, you can run the backend using:
 
    ```bash
