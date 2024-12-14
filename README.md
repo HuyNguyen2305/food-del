@@ -42,15 +42,15 @@ Click on the + next to the crud database to create a new collection.
 Create a collection called users.
 
 ### 5. Running the Application
-After setting up the database and installing dependencies, you can run the backend using:
+1. After setting up the database and installing dependencies, you can run the backend using:
 
-   ```bash
-   npm start
+```bash
+npm start
 
 
-Then open new terminal and run frontend using :
-   ```bash
-   npm run dev
+2. Then open new terminal and run frontend using :
+```bash
+npm run dev
 
 Additional Notes
 Ensure MongoDB is running before you start the application.
