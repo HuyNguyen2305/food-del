@@ -15,13 +15,13 @@ npm install express mongoose cors nodemon
 ### 2. Install Dependencies for Frontend
 1. Navigate to the frontend directory:
 
-``bash
-cd frontend
+   ``bash
+   cd frontend
 
 2. Install Axios for HTTP requests:
 
-``bash
-npm install axios
+   ``bash
+   npm install axios
 
 ### 4. Set Up MongoDB
 To set up MongoDB, follow these steps:
@@ -44,13 +44,13 @@ Create a collection called users.
 ###5. Running the Application
 After setting up the database and installing dependencies, you can run the backend using:
 
-``bash
-npm start
+   ``bash
+   npm start
 
 
 Then open new terminal and run frontend using :
-``bash
-npm run dev
+   ``bash
+   npm run dev
 
 Additional Notes
 Ensure MongoDB is running before you start the application.
