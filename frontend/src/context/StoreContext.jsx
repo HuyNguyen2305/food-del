@@ -5,17 +5,17 @@ export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
 
-    const [cartItems, setCartitems] = useState({});
+    const [cartItems, setCartItems] = useState({});
     const url = "http://localhost:5137"
     const [token, setToken] = useState("");
     const [food_list, setFoodList] = useState([]);
 
     const addToCart = async (itemId) => {
         if (!cartItems[itemId]){
-            setCartitems((prev)=>({...prev,[itemId]:1}))
+            setCartItems((prev)=>({...prev,[itemId]:1}))
         }
         else {
-            setCartitems((prev)=>({...prev,[itemId]:prev[itemId]+1}))
+            setCartItems((prev)=>({...prev,[itemId]:prev[itemId]+1}))
         }
         if (token){
             await axios.post(url+"/api/cart/add", {itemId}, {headers:{token}})
@@ -23,7 +23,7 @@ const StoreContextProvider = (props) => {
     }
 
     const removeFromCart = async (itemId) => {
-        setCartitems((prev)=>({...prev,[itemId]:prev[itemId]-1}));
+        setCartItems((prev)=>({...prev,[itemId]:prev[itemId]-1}));
         if (token){
             await axios.post(url+"/api/cart/remove", {itemId}, {headers:{token}})
         }
@@ -74,7 +74,7 @@ const StoreContextProvider = (props) => {
     const contextValue ={
         food_list,
         cartItems,
-        setCartitems,
+        setCartItems,
         addToCart,
         removeFromCart,
         getTotalCartAmount,
