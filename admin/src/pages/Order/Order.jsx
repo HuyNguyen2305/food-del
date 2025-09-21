@@ -40,7 +40,7 @@ const Order = ({url}) => {
     <div className='order add'>
       <h3>Order Page</h3>
       <div className="order-list">
-        {orders.map((order,index)=>{
+        {orders.map((order,index)=>
           <div key={index} className='order-item'>
             <img src={assets.parcel_icon} alt="" />
             <div>
@@ -67,11 +67,11 @@ const Order = ({url}) => {
             <p>${order.amount}</p>
             <select onChange={(event)=>statusHandler(event, order._id)} value={order.status}>
               <option value="Food Processing">Food Processing</option>
-              <option value="Out for Delivery">Deliverying</option>
+              <option value="Out for Delivery">Out for Delivery</option>
               <option value="Delivered">Delivered</option>
             </select>
           </div>
-        })}
+        )}
       </div>
     </div>
   )
