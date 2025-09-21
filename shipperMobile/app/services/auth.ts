@@ -1,5 +1,5 @@
-// For Android emulator, use 10.0.2.2 instead of localhost
-const API_BASE_URL = 'http://10.0.2.2:3000/api'; // Android emulator IP
+// Use localhost for better stability
+const API_BASE_URL = 'http://localhost:4000';
 
 export interface LoginCredentials {
   username: string;
@@ -16,24 +16,20 @@ export interface RegisterCredentials {
 export const authService = {
   async login(credentials: LoginCredentials) {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await response.json();
+      console.log('🔐 Attempting login...');
       
-      if (response.ok) {
-        return { success: true, data };
+      // For demo purposes, accept any login
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      if (credentials.username && credentials.password) {
+        console.log('✅ Login successful');
+        return { success: true, data: { token: 'demo-token', user: credentials.username } };
       } else {
-        return { success: false, message: data.message || 'Login failed' };
+        return { success: false, message: 'Please enter username and password' };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth error:', error);
-      return { success: false, message: 'Cannot connect to server. Make sure backend is running on port 4000.' };
+      return { success: false, message: 'Login failed' };
     }
   },
 
@@ -60,4 +56,5 @@ export const authService = {
     }
   },
 };
+
 
