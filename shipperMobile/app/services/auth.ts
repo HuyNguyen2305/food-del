@@ -1,5 +1,5 @@
 // For Android emulator, use 10.0.2.2 instead of localhost
-const API_BASE_URL = 'http://10.0.2.2:5174/api'; // Updated to match your admin port
+const API_BASE_URL = 'http://10.0.2.2:2/api';
 
 export interface LoginCredentials {
   username: string;

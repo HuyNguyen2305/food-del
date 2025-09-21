@@ -43,7 +43,7 @@ const Order = ({url}) => {
         {orders.map((order,index)=>
           <div key={index} className='order-item'>
             <img src={assets.parcel_icon} alt="" />
-            <div>
+            <div className="order-details">
               <p className='order-item-food'>
                 {order.items.map((item, index)=>{
                   if (index === order.items.length-1){
@@ -59,7 +59,7 @@ const Order = ({url}) => {
               </p>
               <div className="order-item-address">
                 <p>{order.address.street+","}</p>
-                <p>{order.address.city + "," +order.address.province}</p>
+                <p>{order.address.city + "," + order.address.province}</p>
               </div>
               <p className="order-item-phone">{order.address.phone}</p>
             </div>
