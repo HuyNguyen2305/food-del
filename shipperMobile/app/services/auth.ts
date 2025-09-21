@@ -1,5 +1,5 @@
 // For Android emulator, use 10.0.2.2 instead of localhost
-const API_BASE_URL = 'http://10.0.2.2:2/api';
+const API_BASE_URL = 'http://10.0.2.2:3000/api'; // Android emulator IP
 
 export interface LoginCredentials {
   username: string;
@@ -32,7 +32,8 @@ export const authService = {
         return { success: false, message: data.message || 'Login failed' };
       }
     } catch (error) {
-      return { success: false, message: 'Cannot connect to server' };
+      console.error('Auth error:', error);
+      return { success: false, message: 'Cannot connect to server. Make sure backend is running on port 4000.' };
     }
   },
 
@@ -54,7 +55,8 @@ export const authService = {
         return { success: false, message: data.message || 'Registration failed' };
       }
     } catch (error) {
-      return { success: false, message: 'Cannot connect to server' };
+      console.error('Register error:', error);
+      return { success: false, message: 'Cannot connect to server. Make sure backend is running on port 4000.' };
     }
   },
 };

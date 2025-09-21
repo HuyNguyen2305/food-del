@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -8,31 +8,47 @@ import {
   Modal,
   SafeAreaView 
 } from 'react-native';
+import { orderService, Order } from '../services/orderService';
 
 const OrderScreen = ({ onLogout }: { onLogout?: () => void }) => {
   const [hasOrder, setHasOrder] = useState(false);
-  const [orderDetails, setOrderDetails] = useState({
-    clientAddress: '',
-    orderId: '',
-  });
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
-  // Simulate incoming order
-  const simulateOrder = () => {
-    setOrderDetails({
-      clientAddress: '123 Main Street, Downtown Area',
-      orderId: 'ORD-' + Math.floor(Math.random() * 1000),
+  useEffect(() => {
+    // Start listening for orders when component mounts
+    const stopListening = orderService.startListening((order: Order) => {
+      setCurrentOrder(order);
+      setHasOrder(true);
     });
-    setHasOrder(true);
+
+    // Cleanup listener when component unmounts
+    return stopListening;
+  }, []);
+
+  const handleAccept = async () => {
+    if (!currentOrder) return;
+    
+    const result = await orderService.acceptOrder(currentOrder._id);
+    if (result.success) {
+      Alert.alert('Order Accepted', `Order has been accepted for delivery`);
+      setHasOrder(false);
+      setCurrentOrder(null);
+    } else {
+      Alert.alert('Error', 'Failed to accept order');
+    }
   };
 
-  const handleAccept = () => {
-    Alert.alert('Order Accepted', `Order ${orderDetails.orderId} has been accepted`);
-    setHasOrder(false);
-  };
-
-  const handleDeny = () => {
-    Alert.alert('Order Denied', `Order ${orderDetails.orderId} has been denied`);
-    setHasOrder(false);
+  const handleDeny = async () => {
+    if (!currentOrder) return;
+    
+    const result = await orderService.denyOrder(currentOrder._id);
+    if (result.success) {
+      Alert.alert('Order Denied', `Order has been cancelled`);
+      setHasOrder(false);
+      setCurrentOrder(null);
+    } else {
+      Alert.alert('Error', 'Failed to deny order');
+    }
   };
 
   const handleLogout = () => {
@@ -58,12 +74,9 @@ const OrderScreen = ({ onLogout }: { onLogout?: () => void }) => {
 
       {/* Main content */}
       <View style={styles.content}>
-        <Text style={styles.waitingText}>Waiting for orders...</Text>
-        
-        {/* Simulate order button for testing */}
-        <TouchableOpacity style={styles.simulateButton} onPress={simulateOrder}>
-          <Text style={styles.simulateText}>Simulate Order</Text>
-        </TouchableOpacity>
+        <Text style={styles.waitingText}>
+          {hasOrder ? 'New order received!' : 'Waiting for orders...'}
+        </Text>
       </View>
 
       {/* Order Popup Modal */}
@@ -75,9 +88,12 @@ const OrderScreen = ({ onLogout }: { onLogout?: () => void }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.orderPopup}>
             <Text style={styles.orderTitle}>Order Pending</Text>
-            <Text style={styles.orderAddress}>Client Address:</Text>
-            <Text style={styles.addressText}>{orderDetails.clientAddress}</Text>
-            <Text style={styles.orderId}>Order ID: {orderDetails.orderId}</Text>
+            <Text style={styles.orderAddress}>Client: {currentOrder?.address?.firstName} {currentOrder?.address?.lastName}</Text>
+            <Text style={styles.addressText}>
+              {currentOrder?.address?.street}, {currentOrder?.address?.city}, {currentOrder?.address?.province}
+            </Text>
+            <Text style={styles.orderTotal}>Total: ${currentOrder?.amount}</Text>
+            <Text style={styles.orderId}>Items: {currentOrder?.items?.length}</Text>
           </View>
         </View>
       </Modal>
@@ -149,16 +165,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 20,
   },
-  simulateButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  simulateText: {
-    color: '#fff',
-    fontSize: 16,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -193,6 +199,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 15,
     color: '#555',
+  },
+  orderTotal: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
   },
   orderId: {
     fontSize: 14,
