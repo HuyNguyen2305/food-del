@@ -1,127 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert,
-  Modal,
-  SafeAreaView 
-} from 'react-native';
-import { orderService, Order } from '../services/orderService';
+import { StyleSheet, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
 
-const OrderScreen = ({ onLogout }: { onLogout?: () => void }) => {
-  const [hasOrder, setHasOrder] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+const OrderScreen = () => {
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+  
+  // Your Google Maps API key
+  const GOOGLE_MAPS_API_KEY = 'AIzaSyDQLtXig0yiN7QXBgg7wImbNEH6tMvR7m0';
+  
+  // Client location (random coordinate in Ho Chi Minh City area)
+  const clientLocation = { lat: 10.7829, lng: 106.6958 }; // Example client location
 
+  // Get user's current location
   useEffect(() => {
-    // Start listening for orders when component mounts
-    const stopListening = orderService.startListening((order: Order) => {
-      setCurrentOrder(order);
-      setHasOrder(true);
-    });
-
-    // Cleanup listener when component unmounts
-    return stopListening;
+    getCurrentLocation();
   }, []);
 
-  const handleAccept = async () => {
-    if (!currentOrder) return;
-    
-    const result = await orderService.acceptOrder(currentOrder._id);
-    if (result.success) {
-      Alert.alert('Order Accepted', `Order has been accepted for delivery`);
-      setHasOrder(false);
-      setCurrentOrder(null);
-    } else {
-      Alert.alert('Error', 'Failed to accept order');
+  const getCurrentLocation = async () => {
+    try {
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Location Permission Required',
+          'Please enable location services to show your current position on the map.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Get current position
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setUserLocation({
+        lat: location.coords.latitude,
+        lng: location.coords.longitude,
+      });
+      
+      console.log('User location:', location.coords);
+    } catch (error) {
+      console.error('Error getting location:', error);
+      Alert.alert('Location Error', 'Unable to get your current location. Using default location.');
     }
   };
-
-  const handleDeny = async () => {
-    if (!currentOrder) return;
+  
+  const createMapHTML = () => {
+    const shipperLat = userLocation?.lat || 10.7769;
+    const shipperLng = userLocation?.lng || 106.6917;
     
-    const result = await orderService.denyOrder(currentOrder._id);
-    if (result.success) {
-      Alert.alert('Order Denied', `Order has been cancelled`);
-      setHasOrder(false);
-      setCurrentOrder(null);
-    } else {
-      Alert.alert('Error', 'Failed to deny order');
-    }
-  };
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', onPress: onLogout }
-      ]
-    );
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Delivery Navigation</title>
+      <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      
+      <script>
+        function initMap() {
+          const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 13,
+            center: { lat: ${shipperLat}, lng: ${shipperLng} }
+          });
+          
+          // Add shipper marker
+          new google.maps.Marker({
+            position: { lat: ${shipperLat}, lng: ${shipperLng} },
+            map: map,
+            title: 'Your Location',
+            icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+          });
+          
+          // Add client marker
+          new google.maps.Marker({
+            position: { lat: ${clientLocation.lat}, lng: ${clientLocation.lng} },
+            map: map,
+            title: 'Client Location',
+            icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+          });
+          
+          // Draw route
+          drawRoute(map);
+        }
+        
+        function drawRoute(map) {
+          try {
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({
+              suppressMarkers: true,
+              polylineOptions: {
+                strokeColor: '#4285f4',
+                strokeWeight: 4,
+                strokeOpacity: 0.8
+              }
+            });
+            
+            directionsRenderer.setMap(map);
+            
+            directionsService.route({
+              origin: { lat: ${shipperLat}, lng: ${shipperLng} },
+              destination: { lat: ${clientLocation.lat}, lng: ${clientLocation.lng} },
+              travelMode: google.maps.TravelMode.DRIVING
+            }, function(result, status) {
+              if (status === 'OK' && result) {
+                directionsRenderer.setDirections(result);
+              } else {
+                // Fallback: Simple polyline
+                const line = new google.maps.Polyline({
+                  path: [
+                    { lat: ${shipperLat}, lng: ${shipperLng} },
+                    { lat: ${clientLocation.lat}, lng: ${clientLocation.lng} }
+                  ],
+                  geodesic: true,
+                  strokeColor: '#FF6B6B',
+                  strokeOpacity: 1.0,
+                  strokeWeight: 3
+                });
+                
+                line.setMap(map);
+              }
+            });
+          } catch (error) {
+            // If anything fails, just show the fallback line
+            const line = new google.maps.Polyline({
+              path: [
+                { lat: ${shipperLat}, lng: ${shipperLng} },
+                { lat: ${clientLocation.lat}, lng: ${clientLocation.lng} }
+              ],
+              geodesic: true,
+              strokeColor: '#FF6B6B',
+              strokeOpacity: 1.0,
+              strokeWeight: 3
+            });
+            
+            line.setMap(map);
+          }
+        }
+      </script>
+      
+      <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap">
+      </script>
+    </body>
+    </html>
+    `;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with logout button */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Orders</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Main content */}
-      <View style={styles.content}>
-        <Text style={styles.waitingText}>
-          {hasOrder ? 'New order received!' : 'Waiting for orders...'}
-        </Text>
-      </View>
-
-      {/* Order Popup Modal */}
-      <Modal
-        visible={hasOrder}
-        transparent={true}
-        animationType="slide"
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.orderPopup}>
-            <Text style={styles.orderTitle}>Order Pending</Text>
-            <Text style={styles.orderAddress}>Client: {currentOrder?.address?.firstName} {currentOrder?.address?.lastName}</Text>
-            <Text style={styles.addressText}>
-              {currentOrder?.address?.street}, {currentOrder?.address?.city}, {currentOrder?.address?.province}
-            </Text>
-            <Text style={styles.orderTotal}>Total: ${currentOrder?.amount}</Text>
-            <Text style={styles.orderId}>Items: {currentOrder?.items?.length}</Text>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Footer with Accept/Deny buttons */}
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[
-            styles.footerButton, 
-            hasOrder ? styles.acceptButton : styles.disabledButton
-          ]}
-          onPress={handleAccept}
-          disabled={!hasOrder}
-        >
-          <Text style={styles.footerButtonText}>Accept</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[
-            styles.footerButton, 
-            hasOrder ? styles.denyButton : styles.disabledButton
-          ]}
-          onPress={handleDeny}
-          disabled={!hasOrder}
-        >
-          <Text style={styles.footerButtonText}>Deny</Text>
-        </TouchableOpacity>
-      </View>
+      <WebView
+        source={{ html: createMapHTML() }}
+        style={styles.webView}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={true}
+        scalesPageToFit={true}
+        bounces={false}
+        scrollEnabled={false}
+        onError={(syntheticEvent) => {
+          const { nativeEvent } = syntheticEvent;
+          console.warn('WebView error: ', nativeEvent);
+        }}
+      />
     </SafeAreaView>
   );
 };
@@ -129,114 +181,10 @@ const OrderScreen = ({ onLogout }: { onLogout?: () => void }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  logoutButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 5,
-  },
-  logoutText: {
-    color: '#333',
-    fontSize: 16,
-  },
-  content: {
+  webView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  waitingText: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  orderPopup: {
-    backgroundColor: '#fff',
-    margin: 20,
-    padding: 25,
-    borderRadius: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  orderTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
-  orderAddress: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  addressText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#555',
-  },
-  orderTotal: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  orderId: {
-    fontSize: 14,
-    color: '#888',
-  },
-  footer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#f8f8f8',
-  },
-  footerButton: {
-    flex: 1,
-    height: 50,
-    marginHorizontal: 10,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#ccc',
-  },
-  acceptButton: {
-    backgroundColor: '#28a745',
-  },
-  denyButton: {
-    backgroundColor: '#dc3545',
-  },
-  footerButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

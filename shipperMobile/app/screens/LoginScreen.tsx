@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { authService } from '../services/auth';
 
 const LoginScreen = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
@@ -62,7 +63,7 @@ const LoginScreen = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>
         {isRegisterMode ? 'Shipper Registration' : 'Shipper Login'}
       </Text>
@@ -135,7 +136,7 @@ const LoginScreen = ({ onLoginSuccess }: { onLoginSuccess?: () => void }) => {
             : "Don't have an account? Register"}
         </Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 

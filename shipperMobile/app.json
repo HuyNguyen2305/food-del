@@ -19,7 +19,39 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDQLtXig0yiN7QXBgg7wImbNEH6tMvR7m0"
+        }
+      },
+      "androidManifest": {
+        "application": {
+          "meta-data": [
+            {
+              "android:name": "com.google.android.geo.API_KEY",
+              "android:value": "AIzaSyDQLtXig0yiN7QXBgg7wImbNEH6tMvR7m0"
+            },
+            {
+              "android:name": "com.google.android.geo.API_KEY",
+              "android:value": "AIzaSyDQLtXig0yiN7QXBgg7wImbNEH6tMvR7m0"
+            }
+          ]
+        }
+      },
+      "package": "com.anonymous.shipperMobile"
     },
     "web": {
       "output": "static",
@@ -38,7 +70,20 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "This app uses location to provide delivery navigation and tracking."
+        }
+      ],
+      [
+        "react-native-maps",
+        {
+          "androidGoogleMapsApiKey": "AIzaSyDQLtXig0yiN7QXBgg7wImbNEH6tMvR7m0"
+        }
+      ],
+      "expo-maps"
     ],
     "experiments": {
       "typedRoutes": true,
